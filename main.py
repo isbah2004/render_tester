@@ -2,15 +2,15 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
+from fastapi.responses import FileResponse
 import os
 
-app = FastAPI()
-
-
+# Load environment variables
 load_dotenv()
 
 app = FastAPI()
 
+# Route to return environment configuration
 @app.get("/config")
 def read_config():
     return {
@@ -25,6 +25,7 @@ def read_config():
         }
     }
 
+# Pydantic model for items
 class Item(BaseModel):
     id: int
     name: str
@@ -38,6 +39,13 @@ items = []
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Test FastAPI app!"}
+
+# Serve favicon (optional)
+@app.get("/favicon.ico")
+def favicon():
+    if os.path.exists("favicon.ico"):
+        return FileResponse("favicon.ico")
+    return {"detail": "No favicon"}
 
 # Get all items
 @app.get("/items")
@@ -75,3 +83,9 @@ def delete_item(item_id: int):
             deleted = items.pop(idx)
             return {"message": "Item deleted", "item": deleted}
     return {"error": "Item not found"}
+
+# Entry point for Railway (or local run)
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("APP_PORT", 8000))  # Railway injects PORT
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
